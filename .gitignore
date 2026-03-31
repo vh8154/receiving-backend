@@ -1,0 +1,5 @@
+node_modules/
+credentials.json
+token.json
+station2.db
+direwolf.log
