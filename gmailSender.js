@@ -3,27 +3,35 @@ const path = require("path");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.compose"];
+const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const TOKEN_PATH = path.join(__dirname, "token.json");
 
+function createOAuthClient() {
+  const keys = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+  const key = keys.installed || keys.web;
+
+  return new google.auth.OAuth2(
+    key.client_id,
+    key.client_secret,
+    key.redirect_uris[0]
+  );
+}
+
 async function loadSavedClient() {
   if (!fs.existsSync(TOKEN_PATH)) return null;
-  const content = fs.readFileSync(TOKEN_PATH, "utf8");
-  const credentials = JSON.parse(content);
-  return google.auth.fromJSON(credentials);
+
+  const token = JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8"));
+  const client = createOAuthClient();
+  client.setCredentials(token);
+  return client;
 }
 
 async function saveClient(client) {
-  const keys = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
-  const key = keys.installed || keys.web;
-  const payload = JSON.stringify({
-    type: "authorized_user",
-    client_id: key.client_id,
-    client_secret: key.client_secret,
-    refresh_token: client.credentials.refresh_token,
-  });
-  fs.writeFileSync(TOKEN_PATH, payload);
+  fs.writeFileSync(
+    TOKEN_PATH,
+    JSON.stringify(client.credentials, null, 2)
+  );
 }
 
 async function authorize() {
