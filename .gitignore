@@ -3,3 +3,4 @@ credentials.json
 token.json
 station2.db
 direwolf.log
+.DS_Store
